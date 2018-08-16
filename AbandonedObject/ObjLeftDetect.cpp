@@ -11,8 +11,8 @@ using namespace cv;
 ObjLeftDetect::ObjLeftDetect(myImage * input, int set_MOG_LearnFrame, int set_min_area, int set_buffer_len, myImage * mask)
 {
 	_CBM_model = new CBM_model(input, set_MOG_LearnFrame, set_min_area, set_buffer_len, INPUT_RESIZE, mask);	
-	new_width = (int)(input->width*INPUT_RESIZE);
-	new_height = (int)(input->height*INPUT_RESIZE);	
+	new_width = (int)(input->width);
+	new_height = (int)(input->height);	
 	initialize();
 	alarmList.clear();
 }
@@ -49,12 +49,13 @@ void ObjLeftDetect::initialize()
 	_writer2 = cvCreateVideoWriter("summary.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),1);
 }
 
-
-bool ObjLeftDetect::process(myImage * input)
+ProcessReturn ObjLeftDetect::process(myImage * input)
 {
 	IplImage * test; 
 	test = cvCreateImage(cvSize(new_width, new_height),8,3);
-	set_alarm = false;
+	ProcessReturn processReturn;
+	processReturn.alarm = false;
+
 	myResize(input,myimg2);	
 	object_detected = _CBM_model->Motion_Detection(myimg2);
 	if (object_detected == true)
@@ -83,15 +84,18 @@ bool ObjLeftDetect::process(myImage * input)
 			cvWaitKey(1);
 			cvCopy(test,A);
 			myImageZero(_ImgSynopsis);
-			set_alarm = soft_validation3( _ImgSynopsis, LeftLocation);
+			processReturn.alarm = soft_validation3( _ImgSynopsis, LeftLocation);
 			_CBM_model->System_Reset();
+
+			processReturn.LeftLocation = LeftLocation;
+			
 			LeftLocation.clear();			
 		}
 	}
 	cvWriteFrame( _writer1, A);
 	cvWriteFrame( _writer2, B);
 	cvReleaseImage(&test);
-	return set_alarm;
+	return processReturn;
 }
 
 

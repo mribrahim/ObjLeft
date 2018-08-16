@@ -1,20 +1,20 @@
 50
-500
-120
+100
+110
 10
 1000
 20
-900
+50
 0.0001
 0.002
 0.5
 
 1. OWNER_SEARCH_ROI: 以遺留物為中心,建立一個搜尋owner的圓形ROI, 此參數為圓形ROI的半徑長度(pixel單位)
 2. GMM_LEARN_FRAME: 系統初始化,用多少張frame學習背景
-3. MAX_SFG: 遺留物最大閥值(pixel單位)
-4. MIN_SFG: 遺留物最小閥值(pixel單位)
-5. MAX_FG: 前景最大閥值(pixel單位)
-6. MIN_FG: 前景最小閥值(pixel單位)
+3. MAX_SFG: max static foreground pixel
+4. MIN_SFG: min static foreground pixel
+5. MAX_FG: max foreground pixel
+6. MIN_FG: main foreground pixel
 7. BUFFER_LENGTH: 暫存前景資訊的buffer
 8. GMM_LONG_LEARN_RATE:  Long term model學習速度
 9. GMM_SHORT_LEARN_RATE:  Short term model學習速度

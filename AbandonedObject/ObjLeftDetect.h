@@ -17,12 +17,17 @@
 #include <string>
 #define PI  3.1415926535897932384626433832795
 
+struct ProcessReturn {
+	bool alarm;
+	vector<Obj_info*> LeftLocation;
+};
+
 class ObjLeftDetect
 {
 public:
 	ObjLeftDetect(myImage * input, int set_MOG_LearnFrame, int set_min_area, int set_buffer_len, myImage * mask);
 	~ObjLeftDetect();
-	bool process(myImage * input);
+	ProcessReturn process(myImage * input);
 	CBM_model *_CBM_model;
 	CvVideoWriter *_writer1, *_writer2;
 	IplImage *A, *B;

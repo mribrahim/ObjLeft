@@ -16,8 +16,8 @@ CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, 
 	MIN_AREA = set_min_area;
 	TEMPORAL_RULE = set_buffer_len;
 
-	new_width = (int)(input->width*set_resize);
-	new_height = (int)(input->height*set_resize);
+	new_width = (int)(input->width);
+	new_height = (int)(input->height);
 
 	Initialize();
 

@@ -137,28 +137,33 @@ int main(int argc, char*argv[])
 	}
 	
 
+	
+
 	/************************************************************************/
 	/* Video input setting                                                   */
 	/************************************************************************/
 	VideoDetails *_video;
 	_video = new VideoDetails(test_video);
 	//_video = new VideoDetails("pets2006_1.avi");
+	
+	imagewidth = _video->_width*INPUT_RESIZE;
+	imageheight = _video->_height*INPUT_RESIZE;
+
 	IplImage *qImg, *myimg;
 	_video->_currentFrame = 0;
 	cvSetCaptureProperty(_video->_file, CV_CAP_PROP_POS_FRAMES, _video->_currentFrame);
-	myimg = cvCreateImage(cvSize(_video->_width,_video->_height),8,3);
+	myimg = cvCreateImage(cvSize(imagewidth, imageheight),8,3);
 	cv::Mat mat_myimg(myimg,0);
-	myImage * myimg1 = myCreateImage(_video->_width,_video->_height,3);
+	myImage * myimg1 = myCreateImage(imagewidth, imageheight,3);
 	CvVideoWriter *_writer;
-	_writer = cvCreateVideoWriter("video.avi",CV_FOURCC('X','V','I','D'),30,cvSize(_video->_width,_video->_height),1);
+	_writer = cvCreateVideoWriter("video.avi",CV_FOURCC('X','V','I','D'),30,cvSize(imagewidth, imageheight),1);
 
 	/************************************************************************/
 	/* ROI setting                                                          */
 	/************************************************************************/
-	imageheight = _video->_height*INPUT_RESIZE;
-	imagewidth = _video->_width*INPUT_RESIZE;
+	
 	IplImage *setroi = cvQueryFrame(_video->_file);
-	IplImage *setroi2; setroi2 = cvCreateImage(cvSize(imagewidth,imageheight),8,3);
+	IplImage *setroi2 = cvCreateImage(cvSize(imagewidth,imageheight),8,3);
 	mymask = myCreateImage( imagewidth, imageheight, 3);
 	myInverse(mymask,mymask) ;
 	cvResize(setroi,setroi2);
@@ -178,8 +183,11 @@ int main(int argc, char*argv[])
 	/* main loop                                                       */
 	/************************************************************************/
 	bool obj_left = false;
-	while(qImg = cvQueryFrame(_video->_file))
+	while(IplImage *temp = cvQueryFrame(_video->_file))
 	{		
+		qImg  = cvCreateImage(cvSize(imagewidth, imageheight), 8, 3);
+		cvResize(temp,qImg,1);
+
 		WorkBegin();
 		cvCopy(qImg,myimg);
 		medianBlur( mat_myimg, mat_myimg, 3);
@@ -188,16 +196,26 @@ int main(int argc, char*argv[])
 		/************************************************************************/
 		/* abandoned object detection algorithm                                 */
 		/************************************************************************/
-		obj_left = _objleft.process(myimg1);
+		ProcessReturn obj_left = _objleft.process(myimg1);
 
-		if (obj_left==true)
+		if (obj_left.alarm ==true)
 		{
 			cout<<"alarm!!"<<endl;
+
+			for (size_t i = 0; i < obj_left.LeftLocation.size(); i++)
+			{
+				int x = obj_left.LeftLocation.at(i)->x;
+				int y = obj_left.LeftLocation.at(i)->y;
+				int w = obj_left.LeftLocation.at(i)->width;
+				int h = obj_left.LeftLocation.at(i)->height;
+				cout << "LeftLocation [ " << i << " ]-> x:" << x << " y:" << y << " w:" << w << " h:" << h << endl;
+
+				cvRectangle(qImg, cvPoint(x,y), cvPoint(x+w,y+h), cvScalar(0, 255, 0));
+			}
 		}
 		WorkEnd();
 		Mat _qImg(qImg);
 		putText(_qImg, "fps:" + WorkFps(), Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(255, 100, 0), 2);
-		cvShowImage( "video",qImg);
 		cvShowImage("video",qImg);
 		cvWriteFrame( _writer, qImg);	
 		//cvWaitKey(1);
