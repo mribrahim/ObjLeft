@@ -73,7 +73,7 @@ inline string WorkFps()
     return ss.str();
 }
 
-int main()
+int main(int argc, char*argv[])
 {	
 	/************************************************************************/
 	/* parameter seeting                                                    */
@@ -112,17 +112,30 @@ int main()
 	/************************************************************************/
 	/* choose input channel                                                 */
 	/************************************************************************/
-	char test_video[200];
+	string str = "0";
+	char* test_video = (char*)str.c_str();
+
 	int method;
-	printf("1: video    2: camera\n");
-	scanf("%d",&method);
-	if (method==2){
-		sprintf(test_video, "");
+
+
+	for (int argv_index = 1; argv_index < argc; argv_index++)
+	{
+		if (0 == strcmp("-v", argv[argv_index]))
+		{
+			if ((++argv_index) < argc)
+			{
+				test_video = argv[argv_index];
+			}
+		}
+		else if (0 == strcmp("-c", argv[argv_index]))
+		{
+			if ((++argv_index) < argc)
+			{
+				test_video = argv[argv_index];
+			}
+		}
 	}
-	else{
-		printf("please input video filename:  ***.avi or ***.mp4 \n");
-		scanf("%s",&test_video);
-	}
+	
 
 	/************************************************************************/
 	/* Video input setting                                                   */
@@ -179,7 +192,7 @@ int main()
 
 		if (obj_left==true)
 		{
-			printf("alarm!!\n");
+			cout<<"alarm!!"<<endl;
 		}
 		WorkEnd();
 		Mat _qImg(qImg);

@@ -2,10 +2,16 @@
 using namespace std;
 VideoDetails::VideoDetails(char* filename)
 {
-	if (strcmp(filename, "")== 0)
+	/*if (strcmp(filename, "")== 0)
 	{
-		_file  =  cvCaptureFromCAM(2);
+		_file  =  cvCaptureFromCAM(CV_CAP_ANY);
 		_fps   =  30;
+	}*/
+	if (strlen(filename) == 1 && (filename[0]>= 48 || filename[0] <=57) )
+	{
+		unsigned short x = filename[0] - 48;
+		_file = cvCaptureFromCAM(x);
+		_fps = 30;
 	}
 	else{
 		_file  =  cvCaptureFromFile(filename);
