@@ -155,8 +155,11 @@ int main(int argc, char*argv[])
 	myimg = cvCreateImage(cvSize(imagewidth, imageheight),8,3);
 	cv::Mat mat_myimg(myimg,0);
 	myImage * myimg1 = myCreateImage(imagewidth, imageheight,3);
+
+#ifdef WRITER_DEF
 	CvVideoWriter *_writer;
 	_writer = cvCreateVideoWriter("video.avi",CV_FOURCC('X','V','I','D'),30,cvSize(imagewidth, imageheight),1);
+#endif
 
 	/************************************************************************/
 	/* ROI setting                                                          */
@@ -217,7 +220,9 @@ int main(int argc, char*argv[])
 		Mat _qImg(qImg);
 		putText(_qImg, "fps:" + WorkFps(), Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(255, 100, 0), 2);
 		cvShowImage("video",qImg);
+#ifdef WRITER_DEF
 		cvWriteFrame( _writer, qImg);	
+#endif
 		//cvWaitKey(1);
 		if (waitKey(1) == 27) //wait for 'esc' key press. If 'esc' key is pressed, break loop
 		{
@@ -228,7 +233,9 @@ int main(int argc, char*argv[])
 	myimg1->myReleaseImage();
 	cvReleaseImage(&qImg);
 	cvReleaseImage(&myimg);
+#ifdef WRITER_DEF
 	cvReleaseVideoWriter(&_writer);
-	system("pause");
+#endif
+	//system("pause");
 	return 0;
 }

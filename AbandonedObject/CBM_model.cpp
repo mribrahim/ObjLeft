@@ -34,7 +34,7 @@ CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, 
     {
         printf( "Unable to load the model\n"
                 "Pass it as the second parameter: latentsvmdetect <path to cat.jpg> <path to cat.xml>\n" );
-        system("pause");
+        //system("pause");
 		return;
     }	
 
@@ -49,11 +49,14 @@ CBM_model::~CBM_model()
 }
 void CBM_model::Initialize()
 {
+
+#ifdef WRITER_DEF
 	_writer1 = cvCreateVideoWriter("long.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),0);
 	_writer2 = cvCreateVideoWriter("short.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),0);
 	_writer3 = cvCreateVideoWriter("static.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),1);
 	_writer5 =  cvCreateVideoWriter("DPM.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),1);
-	
+#endif
+
 
 	mog_fg = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 1);
 	mog_fg2 = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 1);
@@ -102,10 +105,13 @@ void CBM_model::Initialize()
 }
 void CBM_model::Uninitialize()
 {
+
+#ifdef WRITER_DEF
 	cvReleaseVideoWriter(&_writer1);
 	cvReleaseVideoWriter(&_writer2);
 	cvReleaseVideoWriter(&_writer3);
 	cvReleaseVideoWriter(&_writer5);
+#endif
 	
 	cvReleaseImage(&mog_fg);
 	cvReleaseImage(&mog_fg2);
@@ -159,9 +165,11 @@ bool CBM_model::Motion_Detection(myImage *img)
 
 		frame_count++;
 
+#ifdef WRITER_DEF
 		cvWriteFrame( _writer1, mog_fg);
 		cvWriteFrame( _writer2, mog_fg2);
 		cvWriteFrame( _writer3, imgStatic);
+#endif
 		return false;
 	}
 	else{
@@ -203,9 +211,11 @@ bool CBM_model::Motion_Detection(myImage *img)
 		if((staticFG_pixel_num_now==staticFG_pixel_num_pre)&&(staticFG_pixel_num_pre==staticFG_pixel_num_pre2)&&(staticFG_pixel_num_now>0))
 			static_object_detected = myClustering2( my_imgStatic, 1);
 
+#ifdef WRITER_DEF
 		cvWriteFrame( _writer1, mog_fg);
 		cvWriteFrame( _writer2, mog_fg2);
 		cvWriteFrame( _writer3, imgStatic);
+#endif
 
 		FG_count = FG_count + 1;
 		FG_count = FG_count%TEMPORAL_RULE;
@@ -466,8 +476,10 @@ void CBM_model::DetectPrevious_nForeground_DPM2( int n)
 		}
 	}
 	
- 
+#ifdef WRITER_DEF
 	cvWriteFrame( _writer5, temp);
+#endif
+
 	cvShowImage("DPM",temp);
 	cvWaitKey(1);
     
@@ -512,7 +524,10 @@ void CBM_model::DetectPrevious_nForeground_DPM( int n)
 			}	
 		}
     }
+
+#ifdef WRITER_DEF
 	cvWriteFrame( _writer5, temp);
+#endif
 	cvShowImage("DPM",temp);
 	cvWaitKey(1);
     cvReleaseMemStorage( &storage );

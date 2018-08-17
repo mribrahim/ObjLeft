@@ -2,6 +2,6 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-v D:\PYTHON_Projects\AbandonedObject\dataset\abandoned.avi</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-v D:\PYTHON_Projects\AbandonedObject\dataset\video1.avi</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
