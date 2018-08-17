@@ -44,6 +44,8 @@ private:
 	void do_detection( int validation_method);
 	bool soft_validation3( myImage * ImgSynopsis, vector<Obj_info*> obj_left);
 	
+	bool validate_result(myImage * ImgSynopsis, vector<Obj_info*> obj_left);
+
 	//show result //
 	inline void WorkBegin();
 	inline void WorkEnd();

@@ -202,6 +202,17 @@ bool CBM_model::Motion_Detection(myImage *img)
  		myImage_2_opencv(my_imgStatic,imgStatic);
 		myImage_2_opencv(my_mog_fg,mog_fg);
 		myImage_2_opencv(my_mog_fg2,mog_fg2);
+
+		//Mat mog1(mog_fg);
+		//Mat mog2(mog_fg2);
+		//Mat dest;
+		//absdiff(mog1, mog2, dest);
+		//imshow("Difference", dest);
+
+		IplImage *candidateStatic = cvCreateImage(cvSize(new_width, new_height), 8, 3);
+		myImage_2_opencv(my_imgCandiStatic, candidateStatic);
+		cvShowImage("Candidate static obj", candidateStatic);
+
 		cvShowImage("static obj", imgStatic);
  		cvShowImage("Long-term", mog_fg);
  		cvShowImage("Short-term", mog_fg2);

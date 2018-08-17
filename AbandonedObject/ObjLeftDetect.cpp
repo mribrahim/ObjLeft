@@ -45,8 +45,10 @@ void ObjLeftDetect::initialize()
 	cvZero(A);
 	cvZero(B);
 	
+#ifdef WRITER_DEF
 	_writer1 = cvCreateVideoWriter("static_to_track.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),1);
 	_writer2 = cvCreateVideoWriter("summary.avi",CV_FOURCC('X','V','I','D'),30,cvSize(new_width,new_height),1);
+#endif
 }
 
 ProcessReturn ObjLeftDetect::process(myImage * input)
@@ -84,7 +86,8 @@ ProcessReturn ObjLeftDetect::process(myImage * input)
 			cvWaitKey(1);
 			cvCopy(test,A);
 			myImageZero(_ImgSynopsis);
-			processReturn.alarm = soft_validation3( _ImgSynopsis, LeftLocation);
+			//processReturn.alarm = soft_validation3( _ImgSynopsis, LeftLocation);
+			processReturn.alarm = validate_result( _ImgSynopsis, LeftLocation);
 			_CBM_model->System_Reset();
 
 			processReturn.LeftLocation = LeftLocation;
@@ -92,12 +95,182 @@ ProcessReturn ObjLeftDetect::process(myImage * input)
 			LeftLocation.clear();			
 		}
 	}
+
+#ifdef WRITER_DEF
 	cvWriteFrame( _writer1, A);
 	cvWriteFrame( _writer2, B);
+#endif
 	cvReleaseImage(&test);
 	return processReturn;
 }
 
+
+bool ObjLeftDetect::validate_result(myImage * ImgSynopsis, vector<Obj_info*> obj_left)
+{
+
+	for (size_t i = 0; i < obj_left.size(); i++)
+	{
+		int x = obj_left.at(i)->x;
+		int y = obj_left.at(i)->y;
+		int w = obj_left.at(i)->width;
+		int h = obj_left.at(i)->height;
+		int area = (w*h);
+		if (area > MAX_SFG || area < MIN_SFG)
+			return false;
+	}
+
+
+	bool _set_alarm = false;
+	bool ** foreground;
+	int temporal_rule = BUFFER_LENGTH;
+	int retreval_time = temporal_rule / 2 + temporal_rule / 6;
+
+	bool ** ForeSynopsis;
+	ForeSynopsis = (bool **)malloc(new_width * sizeof(bool *));
+	for (int i = 0; i < new_width; i++) {
+		ForeSynopsis[i] = (bool *)malloc(new_height * sizeof(bool));
+	}
+	for (int i = 0; i < new_width; i++) {
+		for (int j = 0; j < new_height; j++) {
+			ForeSynopsis[i][j] = false;
+		}
+	}
+
+
+	/************************************************************************/
+	/*  capture the color information of the suspected owner               */
+	/************************************************************************/
+	foreground = _CBM_model->GetPrevious_nForeground(retreval_time - 1);//the moment the bag dropped   (need to check!!)
+	bool foreground_found = false;
+#pragma omp parallel for
+	for (int j = 0; j < new_width; j++)
+	{
+		for (int k = 0; k < new_height; k++)
+		{
+			if (foreground[j][k] == true)
+			{
+				for (int n = 0; n < obj_left.size(); n++)
+				{
+					float owner_dist = point_dist((float)j, (float)k, (float)obj_left.at(n)->x, (float)obj_left.at(n)->y);
+					if (owner_dist<OWNER_SEARCH_ROI)//distance threshold
+					{
+						for (int w = -30; w < 30; w++)
+						{
+							//rgb histogram accumulated
+							myColor color;
+							color = myGet2D(_CBM_model->_GetPrevious_nFrame(retreval_time - 1), j, k);
+							//printf("get color: r = %lf, g = %lf, b = %lf\n",(float)color.R,(float)color.G, (float)color.B);
+							obj_left.at(n)->Owner_B[(int)((float)color.B / 255.0*10.0)] += 1.0;
+							obj_left.at(n)->Owner_G[(int)((float)color.G / 255.0*10.0)] += 1.0;
+							obj_left.at(n)->Owner_R[(int)((float)color.R / 255.0*10.0)] += 1.0;
+						}
+						foreground_found = true;
+					}
+				}
+			}
+		}
+	}
+
+	//if there is no foreground found near to the suspected left object, that is, we have a false alarm of object left detection
+	//than return nothing!
+	if (foreground_found == false)
+		return false;
+
+	//else if we found foregournd object, it must be the owner, than we extract the color information of further processing 
+
+	myFloatColor ** obj_colors;
+	obj_colors = (myFloatColor **)malloc(obj_left.size() * sizeof(myFloatColor *));
+	for (int i = 0; i < obj_left.size(); i++)
+		obj_colors[i] = (myFloatColor *)malloc(10 * sizeof(myFloatColor));
+
+	for (int i = 0; i < obj_left.size(); i++)
+	{
+		//normalizing the histogram accumulated information
+		double total_r = 0.0, total_g = 0.0, total_b = 0.0;
+		for (int j = 0; j < 10; j++)
+		{
+			total_r = total_r + obj_left.at(i)->Owner_R[j];
+			total_g = total_g + obj_left.at(i)->Owner_G[j];
+			total_b = total_b + obj_left.at(i)->Owner_B[j];
+		}
+		for (int j = 0; j < 10; j++)
+		{
+			obj_left.at(i)->Owner_R[j] = (obj_left.at(i)->Owner_R[j] / (total_r + 0.001));
+			obj_left.at(i)->Owner_G[j] = (obj_left.at(i)->Owner_G[j] / (total_g + 0.001));
+			obj_left.at(i)->Owner_B[j] = (obj_left.at(i)->Owner_B[j] / (total_b + 0.001));
+
+			obj_colors[i][j].R = obj_left.at(i)->Owner_R[j];
+			obj_colors[i][j].G = obj_left.at(i)->Owner_G[j];
+			obj_colors[i][j].B = obj_left.at(i)->Owner_B[j];
+		}
+	}
+
+
+	/************************************************************************/
+	/* generate the synopsis image                                          */
+	/************************************************************************/
+	//SYSTEMTIME s;
+	//GetSystemTime(&s);
+	for (int i = 1; i < retreval_time; i = i + 1)//之前都是i=i+3
+	{
+		IplImage * img = cvCreateImage(cvSize(new_width, new_height), 8, 3);
+		IplImage * fg = cvCreateImage(cvSize(new_width, new_height), 8, 1);
+		foreground = _CBM_model->GetPrevious_nForeground(i);
+#pragma omp parallel for
+		for (int j = 0; j < new_width; j++)
+		{
+			for (int k = 0; k < new_height; k++)
+			{
+				if (foreground[j][k] == true)
+				{
+					myColor color;
+					color = myGet2D(_CBM_model->_GetPrevious_nFrame(i), j, k);
+					mySet2D(ImgSynopsis, color, j, k);
+					ForeSynopsis[j][k] = true;
+
+					CvScalar ppp;
+					ppp.val[0] = color.B; ppp.val[1] = color.G; ppp.val[2] = color.R;
+					Set2D(img, k, j, ppp);
+					CvScalar aaa;
+					aaa.val[0] = aaa.val[1] = aaa.val[2] = 255;
+					Set2D(fg, k, j, aaa);
+				}
+				else
+				{
+					CvScalar ppp;
+					ppp.val[0] = ppp.val[1] = ppp.val[2] = 0;
+					Set2D(img, k, j, ppp);
+					CvScalar aaa;
+					aaa.val[0] = aaa.val[1] = aaa.val[2] = 0;
+					Set2D(fg, k, j, aaa);
+				}
+			}
+		}
+		//char a[50], b[50];
+		//sprintf(a,"temp\\mask%d%d%d%d%d%d_%d.bmp",s.wYear,s.wMonth,s.wDay,s.wHour,s.wMinute,s.wMilliseconds,i);
+		//sprintf(b,"temp\\image%d%d%d%d%d%d_%d.bmp",s.wYear,s.wMonth,s.wDay,s.wHour,s.wMinute,s.wMilliseconds,i);
+		//cvSaveImage(a,fg);
+		//cvSaveImage(b,img);
+		cvReleaseImage(&img);
+		cvReleaseImage(&fg);
+	}
+
+	IplImage * temp = cvCreateImage(cvSize(ImgSynopsis->width, ImgSynopsis->height), 8, 3);
+	myImage_2_opencv(ImgSynopsis, temp);
+	cvShowImage("synopsis", temp);
+	cvReleaseImage(&temp);
+
+	cvZero(B);
+
+
+
+	free(*ForeSynopsis);
+	free(ForeSynopsis);
+	free(*obj_colors);
+	free(obj_colors);
+
+	return true;
+}
 
 bool ObjLeftDetect::soft_validation3( myImage * ImgSynopsis, vector<Obj_info*> obj_left)
 {
