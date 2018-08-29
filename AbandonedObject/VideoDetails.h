@@ -2,6 +2,7 @@
 #define _VIDEO_DETAILS_H_
 
 #include "opencvheader.h"
+#include "opencv2/opencv.hpp"
 
 class VideoDetails
 {
@@ -20,7 +21,10 @@ public:
 	int _currentFrame;  //record current frame
 	int _frameNum;      //record total frame number
 	int _fps;
-	CvCapture *_file;
+
+	//CvCapture *_file;	
+	cv::VideoCapture *_file;
+
 	IplImage  *_frame; 
 	char _videoName[50];
 	double _width;

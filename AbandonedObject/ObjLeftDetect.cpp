@@ -62,8 +62,14 @@ ProcessReturn ObjLeftDetect::process(myImage * input)
 	object_detected = _CBM_model->Motion_Detection(myimg2);
 	if (object_detected == true)
 	{
-		processReturn.alarm = true; // validate_result(_ImgSynopsis, LeftLocation);
+
+		LeftLocation = _CBM_model->GetStaticForegourdResult();
+
+		processReturn.alarm = validate_result(_ImgSynopsis, LeftLocation);
 		processReturn.blobs = _CBM_model->myblobs;
+
+		//if (processReturn.alarm)
+		//	_CBM_model->System_Reset();
 	}
 
 	//if (object_detected == true)

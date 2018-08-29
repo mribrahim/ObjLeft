@@ -72,19 +72,19 @@ struct gaussian
 	};
 };
 
-struct Node
+struct myNode
 {
 	gaussian* pixel_s;
 	gaussian* pixel_r;
 	int no_of_components;
-	Node* Next;
+	myNode* Next;
 };
 
 class myGMM 
 {
 public:
 	gaussian  *ptr, *start, *rear, *g_temp, *save, *next, *previous, *nptr, *temp_ptr;
-	Node  *N_ptr,*N_rear, *N_start;//, 
+	myNode  *N_ptr,*N_rear, *N_start;//, 
 
 	//Some constants for the algorithm
 	double pi;
@@ -117,8 +117,8 @@ public:
 	unsigned char * b_ptr;
 	
 	//Some function associated with the structure management
-	Node* Create_Node(double info1, double info2, double info3);
-	void Insert_End_Node(Node* np);
+	myNode* Create_myNode(double info1, double info2, double info3);
+	void Insert_End_myNode(myNode* np);
 	gaussian* Create_gaussian(double info1, double info2, double info3);
 	void Insert_End_gaussian(gaussian* nptr);
 	gaussian* Delete_gaussian(gaussian* nptr);

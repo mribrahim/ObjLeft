@@ -107,8 +107,8 @@ std::list<Blob> Blob_Detect::FindBlobs(Mat input)
 		//break;
 	}
 
-	//if (myBlobs.size() > 0)
-	//	cout << "blob found!!" << endl;
+	if (myBlobs.size() > 0)
+		cout << "blob found!!" << endl;
 
 	return myBlobs;
 }

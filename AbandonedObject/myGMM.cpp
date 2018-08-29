@@ -77,10 +77,10 @@ void myGMM::initial(myImage * inputRGB)
 		{
 			myColor colors;
 			colors = myGet2D(inputRGB,j,i);
-			Node * N_ptr = Create_Node((double)colors.B,(double)colors.G,(double)colors.R);
+			myNode * N_ptr = Create_myNode((double)colors.B,(double)colors.G,(double)colors.R);
 			if( N_ptr != NULL ){
 				N_ptr->pixel_s->weight = 1.0;
-				Insert_End_Node(N_ptr);
+				Insert_End_myNode(N_ptr);
 			}
 			else
 			{
@@ -102,10 +102,10 @@ void myGMM::initial(Mat orig_img)
 		for( int j=0; j<orig_img.cols; j++ )
 		{
 			
-			Node * N_ptr = Create_Node(*r_ptr,*(r_ptr+1),*(r_ptr+2));
+			myNode * N_ptr = Create_myNode(*r_ptr,*(r_ptr+1),*(r_ptr+2));
 			if( N_ptr != NULL ){
 				N_ptr->pixel_s->weight = 1.0;
-				Insert_End_Node(N_ptr);
+				Insert_End_myNode(N_ptr);
 			}
 			else
 			{
@@ -123,9 +123,9 @@ void myGMM::ChangeLearningRate(float new_learn_rate)
 	alpha = new_learn_rate;
 }
 
-Node* myGMM::Create_Node(double info1, double info2, double info3)
+myNode* myGMM::Create_myNode(double info1, double info2, double info3)
 {
-	N_ptr = new Node;
+	N_ptr = new myNode;
 	if(N_ptr != NULL)
 	{		
 		N_ptr->Next = NULL;
@@ -151,7 +151,7 @@ gaussian* myGMM::Create_gaussian( double info1, double info2, double info3)
 	return ptr;
 }
 
-void myGMM::Insert_End_Node(Node* np)
+void myGMM::Insert_End_myNode(myNode* np)
 {
 	if( N_start != NULL )
 	{

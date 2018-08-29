@@ -28,20 +28,6 @@ CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, 
 
 	maskROI = mask;
 
-
-	const char* model_filename = "DPM_person.xml";
-    detector = cvLoadLatentSvmDetector(model_filename);
-    if (!detector)
-    {
-        printf( "Unable to load the model\n"
-                "Pass it as the second parameter: latentsvmdetect <path to cat.jpg> <path to cat.xml>\n" );
-        //system("pause");
-		return;
-    }	
-
-
-	hog = HOGDescriptor(cvSize(Win_width,Win_height),cvSize(Block_size,Block_size),cvSize(Block_stride,Block_stride),cvSize(Cell_size,Cell_size),Bin_num);
-	hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
 }
 
 CBM_model::~CBM_model()
@@ -223,11 +209,23 @@ bool CBM_model::Motion_Detection(myImage *img)
 		Mat tempMat = cv::cvarrToMat(imgStatic);
 		cvtColor(tempMat, tempMat, CV_BGR2GRAY);
 
-
 		myblobs = blob_detect->FindBlobs(tempMat);
-		//if (myblobs.size() > 0) {
-		//	static_object_detected = true;
-		//}
+		if (myblobs.size() > 0) {
+			static_object_detected = true;
+
+			std::list<Blob>::iterator it = myblobs.begin();
+			for (size_t i = 0; i < myblobs.size(); i++)
+			{
+				Obj_info * element;
+				element = new Obj_info;
+				element->x = it->bounding_box.x;
+				element->y = it->bounding_box.y;
+				element->width = it->bounding_box.width;
+				element->height = it->bounding_box.height;
+				static_object_result.push_back(element);
+		}
+
+		}
 
 #ifdef WRITER_DEF
 		cvWriteFrame( _writer1, mog_fg);
@@ -421,177 +419,6 @@ bool ** CBM_model::GetPrevious_nForeground( int n)
 	return Previous_FG[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE];
 }
 
-void CBM_model::DetectPrevious_nForeground_DPM2( int n)
-{
-	IplImage * temp;
-	
-	temp = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 3);
-	
-	myImage_2_opencv( _Previous_Img[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE], temp);
-	
-	for (int i = 0; i < new_width; i++)
-	{
-		for (int j = 0; j < new_height; j++)
-		{
-			if (Previous_FG[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE][i][j]==true)
-			{
-				myColor color; color.R = 255; color.G = 255; color.B = 255;
-				mySet2D(dpm_gray,color,i,j);
-			}
-			else
-			{
-				myColor color; color.R = 0; color.G = 0; color.B = 0;
-				mySet2D(dpm_gray,color,i,j);
-			}
-		}
-	}
-	
-	bool foregournd_found;
-	foregournd_found = myClustering2( dpm_gray, 0);
-
-	if (foregournd_found == true)
-	{
-		int object_num = detected_result.size();
-		for (int i = 0; i < object_num; i++)
-		{
-			int roi_x = detected_result.at(i)->x;
-			int roi_y = detected_result.at(i)->y;
-			int roi_w = detected_result.at(i)->width;
-			int roi_h = detected_result.at(i)->height;
-			cvSetImageROI(temp, cvRect(roi_x, roi_y, roi_w, roi_h));
-
-			//use deformable part-based model to detect the pedestrian
-
-			CvMemStorage* storage = cvCreateMemStorage(0);
-			CvSeq* detections = 0;
-
-			detections = cvLatentSvmDetectObjects(temp, detector, storage, 0.5f, -1);
-
-			for( int i = 0; i < detections->total; i++ )
-			{
-				CvObjectDetection detection = *(CvObjectDetection*)cvGetSeqElem( detections, i );
-				double score = detection.score;
-				if (score>0)
-				{
-					CvRect bounding_box = detection.rect;
-
-					cvRectangle( temp, cvPoint(bounding_box.x, bounding_box.y),
-									cvPoint(bounding_box.x + bounding_box.width,
-									bounding_box.y + bounding_box.height),
-									CV_RGB(cvRound(255.0f*score),0,0), 3 );
-
-					printf("x = %d, y %d, w = %d, h = %d\n",roi_x+bounding_box.x,roi_y+bounding_box.y,bounding_box.width,bounding_box.height);
-					if ((bounding_box.x>0)&&(bounding_box.x<new_width)&&(bounding_box.x+bounding_box.width>0)&&(bounding_box.x+bounding_box.width<new_width)&&
-						(bounding_box.y>0)&&(bounding_box.y<new_height)&&(bounding_box.y+bounding_box.height>0)&&(bounding_box.y+bounding_box.height<new_height)&&
-						(bounding_box.width*bounding_box.height<MAX_FG)&&(bounding_box.height>bounding_box.width))
-					{
-						for (int x = roi_x+bounding_box.x; x <= (roi_x+bounding_box.x+bounding_box.width); x++){
-							for (int y = roi_y+bounding_box.y; y <= (roi_y+bounding_box.y+bounding_box.height); y++){
-								Previous_FG[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE][x][y] = true;	
-							}
-						}
-					}	
-				}
-			}
-			cvReleaseMemStorage( &storage );
-			//detection end
-
-
-			cvResetImageROI(temp);
-		}
-	}
-	
-#ifdef WRITER_DEF
-	cvWriteFrame( _writer5, temp);
-#endif
-
-	cvShowImage("DPM",temp);
-	cvWaitKey(1);
-    
-	cvReleaseImage(&temp);
-}
-
-void CBM_model::DetectPrevious_nForeground_DPM( int n)
-{
-	IplImage * temp;
-	temp = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 3);
-	myImage_2_opencv( _Previous_Img[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE], temp);
-	//detect_and_draw_objects( temp, detector, -1);
-	
-    CvMemStorage* storage = cvCreateMemStorage(0);
-    CvSeq* detections = 0;
-
-    detections = cvLatentSvmDetectObjects(temp, detector, storage, 0.5f, -1);
-
-    for( int i = 0; i < detections->total; i++ )
-    {
-        CvObjectDetection detection = *(CvObjectDetection*)cvGetSeqElem( detections, i );
-        double score = detection.score;
-		if (score>0)
-		{
-			CvRect bounding_box = detection.rect;
-
-			cvRectangle( temp, cvPoint(bounding_box.x, bounding_box.y),
-							cvPoint(bounding_box.x + bounding_box.width,
-                            bounding_box.y + bounding_box.height),
-							CV_RGB(cvRound(255.0f*score),0,0), 3 );
-
-			printf("x = %d, y %d, w = %d, h = %d\n",bounding_box.x,bounding_box.y,bounding_box.width,bounding_box.height);
-			if ((bounding_box.x>0)&&(bounding_box.x<new_width)&&(bounding_box.x+bounding_box.width>0)&&(bounding_box.x+bounding_box.width<new_width)&&
-				(bounding_box.y>0)&&(bounding_box.y<new_height)&&(bounding_box.y+bounding_box.height>0)&&(bounding_box.y+bounding_box.height<new_height)&&
-				(bounding_box.width*bounding_box.height<MAX_FG)&&(bounding_box.height>bounding_box.width))
-			{
-				for (int x = bounding_box.x; x <= (bounding_box.x+bounding_box.width); x++){
-					for (int y = bounding_box.y; y <= (bounding_box.y+bounding_box.height); y++){
-						Previous_FG[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE][x][y] = true;	
-					}
-				}
-			}	
-		}
-    }
-
-#ifdef WRITER_DEF
-	cvWriteFrame( _writer5, temp);
-#endif
-	cvShowImage("DPM",temp);
-	cvWaitKey(1);
-    cvReleaseMemStorage( &storage );
-	cvReleaseImage(&temp);
-}
-
-void CBM_model::DetectPrevious_nForeground_HOG( int n)
-{
-	IplImage * temp, * gray;
-	temp = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 3);
-	gray = cvCreateImage(cvSize(new_width, new_height), IPL_DEPTH_8U, 1);
-	myImage_2_opencv( _Previous_Img[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE], temp);	
-	cvCvtColor( temp, gray, CV_RGB2GRAY );
-	hog.detectMultiScale(gray, found, 0.0, cv::Size(8,8), cv::Size(0,0), 1.04, 2, true);
-	
-    // Draw positive classified windows
-    for (size_t i = 0; i < found.size(); i++)
-    {
-		Rect r = found[i];
-		cvRectangle(temp, r.tl(), r.br(), cv::Scalar(0,255,0), 2);
-
-			printf("x = %d, y %d, w = %d, h = %d\n",r.x,r.y,r.width,r.height);
-			if ((r.x>0)&&(r.x<new_width)&&(r.x+r.width>0)&&(r.x+r.width<new_width)&&
-				(r.y>0)&&(r.y<new_height)&&(r.y+r.height>0)&&(r.y+r.height<new_height))
-			{
-				for (int x = r.x; x <= (r.x+r.width); x++){
-					for (int y = r.y; y <= (r.y+r.height); y++){
-						Previous_FG[(FG_count+(TEMPORAL_RULE-n))%TEMPORAL_RULE][x][y] = true;	
-					}
-				}
-			}
-
-    }
-	cvShowImage("HOG",temp);
-	cvWaitKey(1);
-
-	cvReleaseImage(&temp);
-	cvReleaseImage(&gray);
-}
 
 void CBM_model::myFSM(myImage *short_term, myImage *long_term, pixelFSM ** imageFSM, bool *** Previous_FG)
 {

@@ -122,10 +122,7 @@ public:
 	vector<Obj_info*> GetStaticForegourdResult();//get the information of the static foreground objects 
 
 	bool ** GetPrevious_nForeground( int n);
-	void DetectPrevious_nForeground_DPM2( int n);
-	void DetectPrevious_nForeground_DPM( int n);
-	void DetectPrevious_nForeground_HOG( int n);
-	CvLatentSvmDetector * detector;
+
 	cv::HOGDescriptor hog;//«Å§ihog detector
 	vector<cv::Rect>  found;
 

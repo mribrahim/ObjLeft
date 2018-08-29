@@ -10,23 +10,23 @@ VideoDetails::VideoDetails(char* filename)
 	if (strlen(filename) == 1 && (filename[0]>= 48 || filename[0] <=57) )
 	{
 		unsigned short x = filename[0] - 48;
-		_file = cvCaptureFromCAM(x);
+		_file = new cv::VideoCapture(x);
 		_fps = 30;
 	}
 	else{
-		_file  =  cvCaptureFromFile(filename);
-		_fps   =  (int)cvGetCaptureProperty(_file, CV_CAP_PROP_FPS);
+		_file  = new cv::VideoCapture(filename);
+		_fps   =  (int)_file->get(CV_CAP_PROP_FPS);
 	}
-	_width =  cvGetCaptureProperty(_file, CV_CAP_PROP_FRAME_WIDTH);
-	_height = cvGetCaptureProperty(_file, CV_CAP_PROP_FRAME_HEIGHT);
-	_frameNum = (int) cvGetCaptureProperty(_file, CV_CAP_PROP_FRAME_COUNT);
-	cvSetCaptureProperty( _file, CV_CAP_PROP_POS_FRAMES, 0 );/* Return to the beginning */
+	_width = _file->get(CV_CAP_PROP_FRAME_WIDTH);
+	_height = _file->get(CV_CAP_PROP_FRAME_HEIGHT);
+	_frameNum = (int)_file->get(CV_CAP_PROP_FRAME_COUNT);
+	//cvSetCaptureProperty( _file, CV_CAP_PROP_POS_FRAMES, 0 );/* Return to the beginning */
 	_frame = cvCreateImage(cvSize(_width,_height), IPL_DEPTH_8U, 3);//kv
 	cout<<"video fps = "<<_fps<<endl;
 }
 VideoDetails::~VideoDetails()
 {
-	cvReleaseCapture(&_file);
+	_file->release();
 	if (writer_create==true){
 		cvReleaseVideoWriter(&writer_frame);
 	}

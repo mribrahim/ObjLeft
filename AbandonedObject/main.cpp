@@ -47,9 +47,9 @@ void onMouse(int Event,int x,int y,int flags,void* param )
 		cvThreshold(Image1,Image1,254,255,CV_THRESH_BINARY);	
 		mask = Image1;
 		opencv_2_myImage(mask,mymask);
-		cvSaveImage("mask.jpg",Image1);	
+		//cvSaveImage("mask.jpg",Image1);	
 		cvShowImage("SetROI",Image1);	
-		cvWaitKey(0);
+		//cvWaitKey(0);
 		cvReleaseImage(&Image1);
 	}
 }
@@ -151,9 +151,9 @@ int main(int argc, char*argv[])
 
 	IplImage *qImg, *myimg;
 	_video->_currentFrame = 0;
-	cvSetCaptureProperty(_video->_file, CV_CAP_PROP_POS_FRAMES, _video->_currentFrame);
+	//cvSetCaptureProperty(_video->_file, CV_CAP_PROP_POS_FRAMES, _video->_currentFrame);
 	myimg = cvCreateImage(cvSize(imagewidth, imageheight),8,3);
-	cv::Mat mat_myimg(myimg,0);
+	cv::Mat mat_myimg = cv::cvarrToMat(myimg);
 	myImage * myimg1 = myCreateImage(imagewidth, imageheight,3);
 
 #ifdef WRITER_DEF
@@ -164,8 +164,11 @@ int main(int argc, char*argv[])
 	/************************************************************************/
 	/* ROI setting                                                          */
 	/************************************************************************/
-	
-	IplImage *setroi = cvQueryFrame(_video->_file);
+
+	Mat frame;
+	_video->_file->read(frame);
+
+	IplImage *setroi = cvCloneImage(&(IplImage)frame);
 	IplImage *setroi2 = cvCreateImage(cvSize(imagewidth,imageheight),8,3);
 	mymask = myCreateImage( imagewidth, imageheight, 3);
 	myInverse(mymask,mymask) ;
@@ -176,18 +179,26 @@ int main(int argc, char*argv[])
 	cvDestroyWindow("SetROI");	
 	
 	cout << "ROI selection completed." << endl;
+
 	/************************************************************************/
 	/* construct object left class                                         */
 	/************************************************************************/
-	ObjLeftDetect _objleft(myimg1,GMM_LEARN_FRAME,MIN_FG,BUFFER_LENGTH,mymask);
+ 	ObjLeftDetect _objleft(myimg1,GMM_LEARN_FRAME,MIN_FG,BUFFER_LENGTH,mymask);
 	
 
 	/************************************************************************/
 	/* main loop                                                       */
 	/************************************************************************/
+	
 	bool obj_left = false;
-	while(IplImage *temp = cvQueryFrame(_video->_file))
+	//while(IplImage *temp = cvQueryFrame(_video->_file))
+	while(true)
 	{		
+		_video->_file->read(frame);
+		if (frame.empty())
+			break;
+
+		IplImage* temp = cvCloneImage(&(IplImage)frame);
 		qImg  = cvCreateImage(cvSize(imagewidth, imageheight), 8, 3);
 		cvResize(temp,qImg,1);
 
@@ -205,20 +216,9 @@ int main(int argc, char*argv[])
 		{
 			cout<<"alarm!!"<<endl;
 
-			for (size_t i = 0; i < obj_left.LeftLocation.size(); i++)
-			{
-				int x = obj_left.LeftLocation.at(i)->x;
-				int y = obj_left.LeftLocation.at(i)->y;
-				int w = obj_left.LeftLocation.at(i)->width;
-				int h = obj_left.LeftLocation.at(i)->height;
-				cout << "LeftLocation [ " << i << " ]-> x:" << x << " y:" << y << " w:" << w << " h:" << h << endl;
-
-				cvRectangle(qImg, cvPoint(x,y), cvPoint(x+w,y+h), cvScalar(0, 255, 0));
-			}
-
+			std::list<Blob>::iterator it = obj_left.blobs.begin();
 			for (size_t i = 0; i < obj_left.blobs.size(); i++)
-			{
-				std::list<Blob>::iterator it = obj_left.blobs.begin();
+			{				
 				std::advance(it, i);
 				int x = it->bounding_box.x;
 				int y = it->bounding_box.y;
@@ -229,15 +229,17 @@ int main(int argc, char*argv[])
 				cvRectangle(qImg, cvPoint(x, y), cvPoint(x + w, y + h), cvScalar(0, 255, 0));
 			}
 		}
+
+
 		WorkEnd();
-		Mat _qImg(qImg);
-		putText(_qImg, "fps:" + WorkFps(), Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(255, 100, 0), 2);
+		Mat _qImg = cv::cvarrToMat(qImg);
+		//putText(_qImg, "fps:" + WorkFps(), Point(5, 20), FONT_HERSHEY_SIMPLEX, 0.9, Scalar(255, 100, 0), 2);
 		cvShowImage("video",qImg);
 #ifdef WRITER_DEF
 		cvWriteFrame( _writer, qImg);	
 #endif
 		//cvWaitKey(1);
-		if (waitKey(1) == 27) //wait for 'esc' key press. If 'esc' key is pressed, break loop
+		if ( (char)waitKey(10) == 27 ) //wait for 'esc' key press. If 'esc' key is pressed, break loop
 		{
 			cout << "esc key is pressed by user" << endl;
 			break;
