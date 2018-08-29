@@ -16,6 +16,7 @@
 
 #include "opencv2/objdetect/objdetect.hpp"
 
+#include "Blob_Detect.h"
 
 #define Bin_num  9
 #define Block_size 16
@@ -94,6 +95,9 @@ public:
 	void Initialize();
 	void Uninitialize();
 	bool Motion_Detection(myImage *img);
+
+	Blob_Detect *blob_detect;
+	list<Blob> myblobs;
 
 	bool myClustering2( myImage *img, int option);//option: 0 for moving obj, 1 for static obj
 	int GetLabeling2( myImage *pImg1, int areaThreshold, int option); //option: 0 for moving obj, 1 for static obj

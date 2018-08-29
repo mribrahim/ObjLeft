@@ -53,48 +53,54 @@ void ObjLeftDetect::initialize()
 
 ProcessReturn ObjLeftDetect::process(myImage * input)
 {
-	IplImage * test; 
-	test = cvCreateImage(cvSize(new_width, new_height),8,3);
+	IplImage * test;
+	test = cvCreateImage(cvSize(new_width, new_height), 8, 3);
 	ProcessReturn processReturn;
 	processReturn.alarm = false;
 
-	myResize(input,myimg2);	
+	myResize(input, myimg2);
 	object_detected = _CBM_model->Motion_Detection(myimg2);
 	if (object_detected == true)
-	{		
-		ObjLocation = _CBM_model->GetDetectResult();	
-		LeftLocation = _CBM_model->GetStaticForegourdResult();
-			
-		if (LeftLocation.size()>0)
-		{
-			myImageZero(_ImgSynopsis);
-
-			for (int i = 0; i < _ImgSynopsis->width; i++)
-			{
-				for (int j = 0; j < _ImgSynopsis->height; j++)
-				{
-					myColor aaa = myGet2D(_CBM_model->my_imgStatic,i,j);
-					myColor bbb; bbb.B = 200; bbb.G = 250; bbb.R = 10;
-					if ((aaa.B==0)&&(aaa.G==200)&&(aaa.R==255))
-					{
-						mySet2D(_ImgSynopsis,bbb,i,j);
-					}
-				}
-			}
-			myImage_2_opencv(_ImgSynopsis,test);
-			cvShowImage("summary",test);
-			cvWaitKey(1);
-			cvCopy(test,A);
-			myImageZero(_ImgSynopsis);
-			//processReturn.alarm = soft_validation3( _ImgSynopsis, LeftLocation);
-			processReturn.alarm = validate_result( _ImgSynopsis, LeftLocation);
-			_CBM_model->System_Reset();
-
-			processReturn.LeftLocation = LeftLocation;
-			
-			LeftLocation.clear();			
-		}
+	{
+		processReturn.alarm = true; // validate_result(_ImgSynopsis, LeftLocation);
+		processReturn.blobs = _CBM_model->myblobs;
 	}
+
+	//if (object_detected == true)
+	//{		
+	//	ObjLocation = _CBM_model->GetDetectResult();	
+	//	LeftLocation = _CBM_model->GetStaticForegourdResult();
+	//		
+	//	if (LeftLocation.size()>0)
+	//	{
+	//		myImageZero(_ImgSynopsis);
+
+	//		for (int i = 0; i < _ImgSynopsis->width; i++)
+	//		{
+	//			for (int j = 0; j < _ImgSynopsis->height; j++)
+	//			{
+	//				myColor aaa = myGet2D(_CBM_model->my_imgStatic,i,j);
+	//				myColor bbb; bbb.B = 200; bbb.G = 250; bbb.R = 10;
+	//				if ((aaa.B==0)&&(aaa.G==200)&&(aaa.R==255))
+	//				{
+	//					mySet2D(_ImgSynopsis,bbb,i,j);
+	//				}
+	//			}
+	//		}
+	//		myImage_2_opencv(_ImgSynopsis,test);
+	//		cvShowImage("summary",test);
+	//		cvWaitKey(1);
+	//		cvCopy(test,A);
+	//		myImageZero(_ImgSynopsis);
+	//		//processReturn.alarm = soft_validation3( _ImgSynopsis, LeftLocation);
+	//		processReturn.alarm = validate_result( _ImgSynopsis, LeftLocation);
+	//		_CBM_model->System_Reset();
+
+	//		processReturn.LeftLocation = LeftLocation;
+	//		
+	//		LeftLocation.clear();			
+	//	}
+	//}
 
 #ifdef WRITER_DEF
 	cvWriteFrame( _writer1, A);
@@ -107,19 +113,6 @@ ProcessReturn ObjLeftDetect::process(myImage * input)
 
 bool ObjLeftDetect::validate_result(myImage * ImgSynopsis, vector<Obj_info*> obj_left)
 {
-
-	for (size_t i = 0; i < obj_left.size(); i++)
-	{
-		int x = obj_left.at(i)->x;
-		int y = obj_left.at(i)->y;
-		int w = obj_left.at(i)->width;
-		int h = obj_left.at(i)->height;
-		int area = (w*h);
-		if (area > MAX_SFG || area < MIN_SFG)
-			return false;
-	}
-
-
 	bool _set_alarm = false;
 	bool ** foreground;
 	int temporal_rule = BUFFER_LENGTH;

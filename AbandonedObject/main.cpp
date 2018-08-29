@@ -215,6 +215,19 @@ int main(int argc, char*argv[])
 
 				cvRectangle(qImg, cvPoint(x,y), cvPoint(x+w,y+h), cvScalar(0, 255, 0));
 			}
+
+			for (size_t i = 0; i < obj_left.blobs.size(); i++)
+			{
+				std::list<Blob>::iterator it = obj_left.blobs.begin();
+				std::advance(it, i);
+				int x = it->bounding_box.x;
+				int y = it->bounding_box.y;
+				int w = it->bounding_box.width;
+				int h = it->bounding_box.height;
+				cout << "Blobs [ " << i << " ]-> x:" << x << " y:" << y << " w:" << w << " h:" << h << endl;
+
+				cvRectangle(qImg, cvPoint(x, y), cvPoint(x + w, y + h), cvScalar(0, 255, 0));
+			}
 		}
 		WorkEnd();
 		Mat _qImg(qImg);

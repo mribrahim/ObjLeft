@@ -7,6 +7,7 @@ using namespace cv;
 
 CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, int set_buffer_len, float set_resize, myImage * mask)
 {
+	blob_detect = new Blob_Detect(MIN_SFG);
 	frame_count = 0;
 	sampling_idx = 0;
 	FG_count = 0;
@@ -211,16 +212,22 @@ bool CBM_model::Motion_Detection(myImage *img)
 
 		IplImage *candidateStatic = cvCreateImage(cvSize(new_width, new_height), 8, 3);
 		myImage_2_opencv(my_imgCandiStatic, candidateStatic);
-		cvShowImage("Candidate static obj", candidateStatic);
-
-		cvShowImage("static obj", imgStatic);
- 		cvShowImage("Long-term", mog_fg);
- 		cvShowImage("Short-term", mog_fg2);
-		cvWaitKey(1);
+		
 
 		bool static_object_detected = false;
-		if((staticFG_pixel_num_now==staticFG_pixel_num_pre)&&(staticFG_pixel_num_pre==staticFG_pixel_num_pre2)&&(staticFG_pixel_num_now>0))
-			static_object_detected = myClustering2( my_imgStatic, 1);
+		//if((staticFG_pixel_num_now==staticFG_pixel_num_pre)&&(staticFG_pixel_num_pre==staticFG_pixel_num_pre2)&&(staticFG_pixel_num_now>0))
+		//	static_object_detected = myClustering2( my_imgStatic, 1);
+
+		//IplImage *temp_imgStatic = cvCreateImage(cvSize(new_width, new_height), 8, 3);;
+
+		Mat tempMat = cv::cvarrToMat(imgStatic);
+		cvtColor(tempMat, tempMat, CV_BGR2GRAY);
+
+
+		myblobs = blob_detect->FindBlobs(tempMat);
+		//if (myblobs.size() > 0) {
+		//	static_object_detected = true;
+		//}
 
 #ifdef WRITER_DEF
 		cvWriteFrame( _writer1, mog_fg);
@@ -230,6 +237,13 @@ bool CBM_model::Motion_Detection(myImage *img)
 
 		FG_count = FG_count + 1;
 		FG_count = FG_count%TEMPORAL_RULE;
+
+		cvShowImage("Candidate static obj", candidateStatic);
+		cvShowImage("static obj", imgStatic);
+		cvShowImage("Long-term", mog_fg);
+		cvShowImage("Short-term", mog_fg2);
+		cvWaitKey(1);
+
 		
 		return static_object_detected;
 	}

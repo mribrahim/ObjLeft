@@ -7,7 +7,7 @@
 200
 0.0001
 0.002
-0.5
+0.3
 
 1. OWNER_SEARCH_ROI: 以遺留物為中心,建立一個搜尋owner的圓形ROI, 此參數為圓形ROI的半徑長度(pixel單位)
 2. GMM_LEARN_FRAME: 系統初始化,用多少張frame學習背景

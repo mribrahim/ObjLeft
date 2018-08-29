@@ -20,6 +20,7 @@
 struct ProcessReturn {
 	bool alarm;
 	vector<Obj_info*> LeftLocation;
+	std::list<Blob> blobs;
 };
 
 class ObjLeftDetect
