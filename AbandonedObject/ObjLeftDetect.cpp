@@ -68,8 +68,8 @@ ProcessReturn ObjLeftDetect::process(myImage * input)
 		processReturn.alarm = validate_result(_ImgSynopsis, LeftLocation);
 		processReturn.blobs = _CBM_model->myblobs;
 
-		//if (processReturn.alarm)
-		//	_CBM_model->System_Reset();
+		if (processReturn.alarm)
+			_CBM_model->System_Reset();
 	}
 
 	//if (object_detected == true)

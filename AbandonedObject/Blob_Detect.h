@@ -22,5 +22,7 @@ public:
 	double get_eccentricity(Moments);
 	double get_eccentricity2(vector<Point>);
 	list<Blob> FindBlobs(Mat);
+
+	Mat element;
 };
 

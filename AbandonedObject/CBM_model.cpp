@@ -7,7 +7,6 @@ using namespace cv;
 
 CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, int set_buffer_len, float set_resize, myImage * mask)
 {
-	blob_detect = new Blob_Detect(MIN_SFG);
 	frame_count = 0;
 	sampling_idx = 0;
 	FG_count = 0;
@@ -23,11 +22,12 @@ CBM_model::CBM_model(myImage * input, int set_MOG_LearnFrame, int set_min_area, 
 	Initialize();
 
 	// Select parameters for Gaussian model.
-	_myGMM = new myGMM(0.0001);//0.0001
-	_myGMM2 = new myGMM(0.002);
+	_myGMM = new myGMM(GMM_LONG_LEARN_RATE);//0.0001
+	_myGMM2 = new myGMM(GMM_SHORT_LEARN_RATE);
 
 	maskROI = mask;
 
+	blob_detect = new Blob_Detect(MIN_AREA);
 }
 
 CBM_model::~CBM_model()
@@ -141,7 +141,14 @@ bool CBM_model::Motion_Detection(myImage *img)
  	myResize(img, _Previous_Img[FG_count]);
 
 	if( frame_count < MOG_LEARN_FRAMES){
-		printf("update mog %d\n",MOG_LEARN_FRAMES-frame_count);
+
+		if (0 == frame_count)
+			cout<<"updating background model ... "<< (MOG_LEARN_FRAMES-frame_count) <<endl;
+		else if ( 0 == frame_count%10 )
+			cout << (MOG_LEARN_FRAMES - frame_count) << " ";
+
+		if ( (MOG_LEARN_FRAMES-1) == frame_count)
+			cout << "updating background completed. " << endl;
 
 		if (frame_count==0){
 			_myGMM->initial(_Previous_Img[FG_count]);
@@ -190,11 +197,6 @@ bool CBM_model::Motion_Detection(myImage *img)
 		myImage_2_opencv(my_mog_fg,mog_fg);
 		myImage_2_opencv(my_mog_fg2,mog_fg2);
 
-		//Mat mog1(mog_fg);
-		//Mat mog2(mog_fg2);
-		//Mat dest;
-		//absdiff(mog1, mog2, dest);
-		//imshow("Difference", dest);
 
 		IplImage *candidateStatic = cvCreateImage(cvSize(new_width, new_height), 8, 3);
 		myImage_2_opencv(my_imgCandiStatic, candidateStatic);
@@ -203,28 +205,32 @@ bool CBM_model::Motion_Detection(myImage *img)
 		bool static_object_detected = false;
 		//if((staticFG_pixel_num_now==staticFG_pixel_num_pre)&&(staticFG_pixel_num_pre==staticFG_pixel_num_pre2)&&(staticFG_pixel_num_now>0))
 		//	static_object_detected = myClustering2( my_imgStatic, 1);
+		
 
-		//IplImage *temp_imgStatic = cvCreateImage(cvSize(new_width, new_height), 8, 3);;
+		// ********** --- MY IMPLEMENTATION --- **********
+		if ((staticFG_pixel_num_now == staticFG_pixel_num_pre) && (staticFG_pixel_num_pre == staticFG_pixel_num_pre2) && (staticFG_pixel_num_now > 0))
+		{
+			Mat tempMat = cv::cvarrToMat(imgStatic);
+			cvtColor(tempMat, tempMat, CV_BGR2GRAY);
 
-		Mat tempMat = cv::cvarrToMat(imgStatic);
-		cvtColor(tempMat, tempMat, CV_BGR2GRAY);
+			myblobs = blob_detect->FindBlobs(tempMat);
+			if (myblobs.size() > 0) {
+				static_object_detected = true;
 
-		myblobs = blob_detect->FindBlobs(tempMat);
-		if (myblobs.size() > 0) {
-			static_object_detected = true;
+				std::list<Blob>::iterator it;
 
-			std::list<Blob>::iterator it = myblobs.begin();
-			for (size_t i = 0; i < myblobs.size(); i++)
-			{
-				Obj_info * element;
-				element = new Obj_info;
-				element->x = it->bounding_box.x;
-				element->y = it->bounding_box.y;
-				element->width = it->bounding_box.width;
-				element->height = it->bounding_box.height;
-				static_object_result.push_back(element);
-		}
+				for (it = myblobs.begin(); it != myblobs.end(); ++it) 
+				{
+					Obj_info * element;
+					element = new Obj_info;
+					element->x = it->bounding_box.x;
+					element->y = it->bounding_box.y;
+					element->width = it->bounding_box.width;
+					element->height = it->bounding_box.height;
+					static_object_result.push_back(element);
+				}
 
+			}
 		}
 
 #ifdef WRITER_DEF
@@ -236,12 +242,13 @@ bool CBM_model::Motion_Detection(myImage *img)
 		FG_count = FG_count + 1;
 		FG_count = FG_count%TEMPORAL_RULE;
 
+//#ifdef IMSHOW_DEF
 		cvShowImage("Candidate static obj", candidateStatic);
 		cvShowImage("static obj", imgStatic);
 		cvShowImage("Long-term", mog_fg);
 		cvShowImage("Short-term", mog_fg2);
 		cvWaitKey(1);
-
+//#endif
 		
 		return static_object_detected;
 	}

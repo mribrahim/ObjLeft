@@ -42,6 +42,9 @@
     <ClCompile Include="Blob_Detect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Functions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CBM_model.h">
@@ -68,9 +71,6 @@
     <ClInclude Include="opencvheader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="parameter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VideoDetails.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -78,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Blob.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="parameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

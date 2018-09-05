@@ -5,7 +5,11 @@
 Blob_Detect::Blob_Detect(int min_blob_size)
 {
 	// minimum blob size
-	blob_size_min = 100; // min_blob_size;
+	blob_size_min = min_blob_size;
+
+	int morph_size = 15;
+	element = getStructuringElement(MORPH_RECT, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
+
 }
 
 
@@ -47,10 +51,10 @@ std::list<Blob> Blob_Detect::FindBlobs(Mat input)
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 
-
 	int width = input.cols;
 	int height = input.rows;
 
+	morphologyEx(input, input, MORPH_CLOSE, element);
 
 	/// Detect edges using canny
 	Canny(input, canny_output, 200, 10);
@@ -62,10 +66,16 @@ std::list<Blob> Blob_Detect::FindBlobs(Mat input)
 	for (int i = 0; i< contours.size(); i++)
 	{
 
-		if (contourArea(contours[i]) < blob_size_min)
+		/*if (contourArea(contours[i]) < blob_size_min)
+			continue;*/
+
+		Rect boundrect = boundingRect(contours[i]);
+		
+		if (boundrect.area() < blob_size_min)
 			continue;
 
 		Blob b;
+		b.bounding_box = boundrect;
 
 		//mc[i] = Point2f((mu[i].m10 / mu[i].m00), (mu[i].m01 / mu[i].m00));
 
@@ -85,8 +95,7 @@ std::list<Blob> Blob_Detect::FindBlobs(Mat input)
 
 		//b.angle = 180.0f / CV_PI * acos((reference.x*usedEdge.x + reference.y*usedEdge.y) / (cv::norm(reference) *cv::norm(usedEdge)));
 
-		Rect boundrect = boundingRect(contours[i]);
-		b.bounding_box = boundrect;
+		
 
 		//b.center = mc[i];
 		b.centerX = boundrect.x + boundrect.width / 2;
