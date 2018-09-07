@@ -1,5 +1,6 @@
 #include "Functions.h"
 
+#include <winsock2.h>
 
 Functions::Functions()
 {
@@ -43,4 +44,25 @@ std::string Functions::current_time() {
 	string str(buf);
 	replace(str, ":", "_");
 	return str;
+}
+
+
+bool Functions::GenerateDirectory(std::string path)
+{
+	// check if path isempty
+	if (0 == path.size())
+		return true;
+
+	if (CreateDirectory(path.c_str(), NULL) ||
+		ERROR_ALREADY_EXISTS == GetLastError())
+	{
+		// CopyFile(...)
+	}
+	else
+	{
+		cout << "Failed to create directory!!!" << endl;
+	}
+
+	
+	return true;
 }

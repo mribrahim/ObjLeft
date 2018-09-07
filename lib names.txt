@@ -1,0 +1,13 @@
+opencv_calib3d342.lib
+opencv_core342.lib
+opencv_features2d342.lib
+opencv_flann342.lib
+opencv_highgui342.lib
+opencv_imgproc342.lib
+opencv_imgcodecs342.lib
+opencv_ml342.lib
+opencv_objdetect342.lib
+opencv_photo342.lib
+opencv_video342.lib
+opencv_videoio342.lib
+opencv_videostab342.lib

@@ -1,5 +1,7 @@
 #include "ObjLeftDetect.h"
 #include "parameter.h"
+#include"definitions.h"
+
 #include <omp.h>
 //#include <Windows.h>
 #include <time.h>
@@ -256,7 +258,11 @@ bool ObjLeftDetect::validate_result(myImage * ImgSynopsis, vector<Obj_info*> obj
 
 	IplImage * temp = cvCreateImage(cvSize(ImgSynopsis->width, ImgSynopsis->height), 8, 3);
 	myImage_2_opencv(ImgSynopsis, temp);
+
+#ifdef IMSHOW_DEF
 	cvShowImage("synopsis", temp);
+#endif
+
 	cvReleaseImage(&temp);
 
 	cvZero(B);

@@ -89,8 +89,8 @@ void loadXML()
 
 	OWNER_SEARCH_ROI = 50;
 	GMM_LEARN_FRAME = 100;
-	MAX_SFG = 150;
-	MIN_SFG = 99000;
+	MIN_SFG = 150;
+	MAX_SFG = 99000;
 	MAX_FG = MAX_SFG;
 	MIN_FG = MIN_SFG;
 	BUFFER_LENGTH = 500;
@@ -149,6 +149,8 @@ void loadXML()
 	MIN_FG = MIN_SFG;
 	cout << "frame_count_to_determine_static_object: " << BUFFER_LENGTH <<endl;
 	cout << "input_resize: " << INPUT_RESIZE << endl;
+	cout << "******************** " << endl << endl;
+
 	GMM_LONG_LEARN_RATE = 0.0001;
 	GMM_SHORT_LEARN_RATE = 0.002;
 }
@@ -160,7 +162,8 @@ int main(int argc, char*argv[])
 	loadXML();
 
 	Functions functions;
-
+	string folder = "alarm";
+	functions.GenerateDirectory(folder);
 	/************************************************************************/
 	/* choose input channel                                                 */
 	/************************************************************************/
@@ -287,7 +290,7 @@ int main(int argc, char*argv[])
 
 		if (obj_left.alarm == true)
 		{
-			string str;
+			string str = folder + "/";
 			str.append("im_");  
 			str.append(functions.current_time()); 
 			str.append(".jpg");

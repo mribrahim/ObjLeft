@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
 	<param name="owner_roi" value="50"/>
-	<param name="learning_frame_count" value="100"/>
+	<param name="learning_frame_count" value="30"/>
 	<param name="min_object_area" value="150"/>
 	<param name="max_object_area" value="9700"/>
-	<param name="input_resize" value="0.5"/>
+	<param name="input_resize" value="0.25"/>
 	<param name="frame_count_to_determine_static_object" value="500"/>
 </Configuration>
 

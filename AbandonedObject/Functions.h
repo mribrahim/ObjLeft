@@ -14,6 +14,8 @@ public:
 	void replace(std::string& str, const std::string& from, const std::string& to);
 	std::string current_date();
 	std::string current_time();
+	bool GenerateDirectory(std::string path);
+
 
 };
 

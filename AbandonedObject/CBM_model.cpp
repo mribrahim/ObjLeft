@@ -1,4 +1,5 @@
 #include "CBM_model.h"
+#include"definitions.h"
 #include <iostream>
 #include <omp.h>
 
@@ -242,13 +243,13 @@ bool CBM_model::Motion_Detection(myImage *img)
 		FG_count = FG_count + 1;
 		FG_count = FG_count%TEMPORAL_RULE;
 
-//#ifdef IMSHOW_DEF
+#ifdef IMSHOW_DEF
 		cvShowImage("Candidate static obj", candidateStatic);
 		cvShowImage("static obj", imgStatic);
 		cvShowImage("Long-term", mog_fg);
 		cvShowImage("Short-term", mog_fg2);
 		cvWaitKey(1);
-//#endif
+#endif
 		
 		return static_object_detected;
 	}
